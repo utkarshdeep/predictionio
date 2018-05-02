@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import PIOBuild._
 
 lazy val scalaSparkDepsVersion = Map(
@@ -62,14 +63,15 @@ crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8")
 
 scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-feature")
 
-scalacOptions in (ThisBuild, Test) ++= Seq("-Yrangepos")
-fork in (ThisBuild, run) := true
+scalacOptions in(ThisBuild, Test) ++= Seq("-Yrangepos")
+fork in(ThisBuild, run) := true
 
-javacOptions in (ThisBuild, compile) ++= Seq("-source", "1.7", "-target", "1.7",
+javacOptions in(ThisBuild, compile) ++= Seq("-source", "1.7", "-target", "1.7",
   "-Xlint:deprecation", "-Xlint:unchecked")
 
 // Ignore differentiation of Spark patch levels
-sparkVersion in ThisBuild := sys.props.getOrElse("spark.version", (if (scalaBinaryVersion.value == "2.10") "1.6.3" else "2.1.1"))
+sparkVersion in ThisBuild := sys.props.getOrElse("spark.version",
+  (if (scalaBinaryVersion.value == "2.10") "1.6.3" else "2.1.1"))
 
 sparkBinaryVersion in ThisBuild := binaryVersion(sparkVersion.value)
 
@@ -110,7 +112,7 @@ val commonSettings = Seq(
 
 val commonTestSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.postgresql"   % "postgresql"  % "9.4-1204-jdbc41" % "test",
+    "org.postgresql" % "postgresql" % "9.4-1204-jdbc41" % "test",
     "org.scalikejdbc" %% "scalikejdbc" % "3.1.0" % "test"))
 
 val dataElasticsearch1 = (project in file("storage/elasticsearch1")).
@@ -137,6 +139,10 @@ val dataLocalfs = (project in file("storage/localfs")).
   enablePlugins(GenJavadocPlugin)
 
 val dataS3 = (project in file("storage/s3")).
+  settings(commonSettings: _*).
+  enablePlugins(GenJavadocPlugin)
+
+val dataCassandra = (project in file("storage/cassandra")).
   settings(commonSettings: _*).
   enablePlugins(GenJavadocPlugin)
 
@@ -180,12 +186,13 @@ val e2 = (project in file("e2")).
 val dataEs = if (majorVersion(es) == 1) dataElasticsearch1 else dataElasticsearch
 
 val storageSubprojects = Seq(
-    dataEs,
-    dataHbase,
-    dataHdfs,
-    dataJdbc,
-    dataLocalfs,
-    dataS3)
+  dataEs,
+  dataHbase,
+  dataHdfs,
+  dataJdbc,
+  dataLocalfs,
+  dataS3,
+  dataCassandra)
 
 val storage = (project in file("storage"))
   .aggregate(storageSubprojects map Project.projectToRef: _*)
@@ -199,9 +206,9 @@ val root = (project in file(".")).
   settings(commonSettings: _*).
   enablePlugins(ScalaUnidocPlugin).
   settings(
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(dataElasticsearch, dataElasticsearch1),
-    unidocProjectFilter in (JavaUnidoc, unidoc) := inAnyProject -- inProjects(dataElasticsearch, dataElasticsearch1),
-    scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
+    unidocProjectFilter in(ScalaUnidoc, unidoc) := inAnyProject -- inProjects(dataElasticsearch, dataElasticsearch1),
+    unidocProjectFilter in(JavaUnidoc, unidoc) := inAnyProject -- inProjects(dataElasticsearch, dataElasticsearch1),
+    scalacOptions in(ScalaUnidoc, unidoc) ++= Seq(
       "-groups",
       "-skip-packages",
       Seq(
@@ -230,7 +237,7 @@ val root = (project in file(".")).
       "-doc-root-content",
       "docs/scaladoc/rootdoc.txt")).
   settings(
-    javacOptions in (JavaUnidoc, unidoc) := Seq(
+    javacOptions in(JavaUnidoc, unidoc) := Seq(
       "-subpackages",
       "org.apache.predictionio",
       "-exclude",
@@ -286,26 +293,34 @@ pomExtra := {
     <artifactId>apache</artifactId>
     <version>18</version>
   </parent>
-  <scm>
-    <connection>scm:git:github.com/apache/predictionio</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/predictionio.git</developerConnection>
-    <url>github.com/apache/predictionio</url>
-  </scm>
-  <developers>
-    <developer>
-      <id>donald</id>
-      <name>Donald Szeto</name>
-      <url>http://predictionio.apache.org</url>
-      <email>donald@apache.org</email>
-    </developer>
-  </developers>
+    <scm>
+      <connection>scm:git:github.com/apache/predictionio</connection>
+      <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/predictionio.git</developerConnection>
+      <url>github.com/apache/predictionio</url>
+    </scm>
+    <developers>
+      <developer>
+        <id>donald</id>
+        <name>Donald Szeto</name>
+        <url>http://predictionio.apache.org</url>
+        <email>donald@apache.org</email>
+      </developer>
+    </developers>
 }
 
 childrenPomExtra in ThisBuild := {
   <parent>
-    <groupId>{organization.value}</groupId>
-    <artifactId>{name.value}_{scalaBinaryVersion.value}</artifactId>
-    <version>{version.value}</version>
+    <groupId>
+      {organization.value}
+    </groupId>
+    <artifactId>
+      {name.value}
+      _
+      {scalaBinaryVersion.value}
+    </artifactId>
+    <version>
+      {version.value}
+    </version>
   </parent>
 }
 
@@ -313,7 +328,7 @@ concurrentRestrictions in Global := Seq(
   Tags.limit(Tags.CPU, 1),
   Tags.limit(Tags.Network, 1),
   Tags.limit(Tags.Test, 1),
-  Tags.limitAll( 1 )
+  Tags.limitAll(1)
 )
 
 parallelExecution := false
