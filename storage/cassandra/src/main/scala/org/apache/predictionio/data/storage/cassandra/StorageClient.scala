@@ -15,25 +15,13 @@
  * limitations under the License.
  */
 
-import PIOBuild._
+package org.apache.predictionio.data.storage.cassandra
 
-name := "apache-predictionio-data-cassandra"
+import grizzled.slf4j.Logging
+import org.apache.predictionio.data.storage.{BaseStorageClient, StorageClientConfig}
 
-libraryDependencies ++= Seq(
-  "org.apache.predictionio" %% "apache-predictionio-core" % version.value % "provided",
-  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "3.4.0"
-)
+class StorageClient(val config: StorageClientConfig) extends BaseStorageClient with Logging {
+  override val client =
 
-parallelExecution in Test := false
-
-pomExtra := childrenPomExtra.value
-
-assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
-
-// skip test in assembly
-test in assembly := {}
-
-assemblyOutputPath in assembly := baseDirectory.value.getAbsoluteFile.getParentFile.getParentFile /
-  "assembly" / "src" / "universal" / "lib" / "spark" /
-  s"pio-data-cassandra-assembly-${version.value}.jar"
+  override val prefix: String = "CASS"
+}
